@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+<title>Desligamento Programado</title>
+<style>
+:root{
+  --bg:#0c0a07; --panel:#120f0b; --card:#15120d; --line:#2b2418; --line2:#3a3121;
+  --gold:#f5c232; --gold2:#d9a41c; --text:#f4efe4; --muted:#a69d89; --red:#ff6b5e;
+  font-family:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);overflow:hidden;user-select:none}
+svg{display:block;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:0}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+/* barra de título */
+.titlebar{height:40px;display:flex;align-items:center;justify-content:space-between;
+  background:#0a0806;border-bottom:1px solid #1f1a11;-webkit-app-region:drag;padding-left:14px}
+.titlebar .t{display:flex;align-items:center;gap:10px;font-size:14px}
+.titlebar .t svg{width:20px;height:20px;color:var(--gold)}
+.wc{display:flex;-webkit-app-region:no-drag;height:100%}
+.wc button{width:46px;display:grid;place-items:center;transition:background .15s}
+.wc button:hover{background:#2a2418}
+.wc button.x:hover{background:#c42b1c}
+.wc svg{width:15px;height:15px;stroke-width:1.5}
+
+.app{display:flex;height:calc(100% - 40px)}
+.art{flex:0 0 37.5%;position:relative;overflow:hidden;background:#000}
+.art img{width:100%;height:100%;object-fit:cover;object-position:left top;display:block}
+.art::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 70%,var(--bg))}
+
+main{flex:1;padding:22px 22px 18px 6px;display:flex;flex-direction:column;gap:12px;min-width:0;overflow-y:auto}
+main>*,.page>*{flex:none}
+main::-webkit-scrollbar{width:0}
+header{display:flex;align-items:center;gap:18px;padding:0 0 4px 22px}
+header>svg{width:54px;height:54px;color:var(--gold);stroke-width:2.6;flex:none}
+header h1{font-size:34px;font-weight:700;letter-spacing:-.5px;line-height:1.1;white-space:nowrap}
+header p{color:var(--muted);font-size:16px;margin-top:2px}
+
+/* abas */
+.tabs{display:flex;border:1px solid var(--line);border-radius:8px;background:var(--panel);overflow:hidden;flex:none}
+.tab{flex:1;height:56px;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--muted);
+  font-size:16px;border-bottom:3px solid transparent;transition:background .15s,color .15s}
+.tab svg{width:26px;height:26px}
+.tab:hover{background:#1a160f;color:var(--text)}
+.tab.on{background:linear-gradient(180deg,#2a2109,#1b1608);color:var(--gold);border-bottom-color:var(--gold);font-weight:600}
+.page{display:none;flex-direction:column;gap:14px}
+.page.on{display:flex}
+
+.card{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:18px 22px}
+.ch{display:flex;gap:16px;align-items:flex-start}
+.ch>svg{width:30px;height:30px;color:var(--gold);flex:none;margin-top:2px}
+.ch h2{font-size:20px;font-weight:600}
+.ch p{color:var(--muted);font-size:15px;margin-top:3px}
+
+.manual{display:flex;align-items:flex-end;gap:16px;margin-top:14px}
+.fields{display:flex;gap:12px}
+.fld label{display:block;color:var(--muted);font-size:16px;margin-bottom:6px}
+.spin{display:flex;width:124px;height:60px;border:1px solid var(--line2);border-radius:8px;background:#0f0d09;overflow:hidden}
+.spin:focus-within{border-color:var(--gold)}
+.spin input{flex:1;min-width:0;background:none;border:0;color:var(--text);font:inherit;font-size:26px;padding:0 0 0 16px;outline:none;user-select:text;-moz-appearance:textfield}
+.spin input::-webkit-inner-spin-button{display:none}
+.spin .ud{width:38px;display:flex;flex-direction:column;border-left:1px solid var(--line)}
+.spin .ud button{flex:1;display:grid;place-items:center;color:var(--muted);transition:background .12s,color .12s}
+.spin .ud button+button{border-top:1px solid var(--line)}
+.spin .ud button:hover{background:#2a2418;color:var(--gold)}
+.spin .ud svg{width:18px;height:18px}
+
+.go{flex:1;min-width:0;height:102px;border-radius:10px;border:1px solid #ffd96b;display:flex;align-items:center;justify-content:center;gap:14px;
+  background:linear-gradient(180deg,#f7c93d,#d8a21a);color:#1a1405;font-size:19px;font-weight:700;line-height:1.1;text-align:left;overflow:hidden;padding:0 10px;
+  box-shadow:0 4px 22px rgba(245,194,50,.18);transition:filter .15s,transform .1s}
+.go:hover{filter:brightness(1.08)}
+.go:active{transform:scale(.985)}
+.go svg{width:44px;height:44px;stroke-width:2.6;flex:none}
+
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.q{height:50px;white-space:nowrap;border:1px solid var(--line2);border-radius:8px;background:#0f0d09;display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;transition:border-color .15s,background .15s}
+.q svg{width:20px;height:20px;color:var(--gold)}
+.q:hover{border-color:var(--gold);background:#1b1608}
+
+.status{display:flex;align-items:center;gap:16px;padding:16px 22px}
+.status>svg{width:32px;height:32px;color:var(--gold);flex:none}
+.status .tx{flex:1;min-width:0}
+.status h3{font-size:20px;font-weight:600}
+.status p{color:var(--muted);font-size:16px;margin-top:4px}
+.status p b{color:var(--gold);font-variant-numeric:tabular-nums;font-weight:600}
+.cancel{height:64px;padding:0 18px;border:1px solid #6a2a26;border-radius:8px;background:#2a0f0e;color:var(--red);
+  display:flex;align-items:center;gap:10px;font-size:16px;line-height:1.25;text-align:left;transition:background .15s,opacity .15s}
+.cancel svg{width:28px;height:28px;flex:none}
+.cancel:hover:not(:disabled){background:#3b1513}
+.cancel:disabled{opacity:.55;cursor:default}
+
+/* opções */
+.opt{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:12px 0;border-top:1px solid var(--line)}
+.opt:first-of-type{border-top:0}
+.opt h4{font-size:17px;font-weight:600}
+.opt p{color:var(--muted);font-size:14px;margin-top:2px}
+.sw{width:54px;height:30px;border-radius:15px;background:#26201a;border:1px solid var(--line2);position:relative;flex:none;transition:background .2s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--muted);transition:transform .2s,background .2s}
+.sw[aria-checked=true]{background:#4a3a0e;border-color:var(--gold)}
+.sw[aria-checked=true]::after{transform:translateX(24px);background:var(--gold)}
+.acts{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:18px}
+.act{height:80px;border:1px solid var(--line2);border-radius:8px;background:#0f0d09;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:16px;color:var(--muted);transition:all .15s}
+.act svg{width:28px;height:28px}
+.act:hover{border-color:var(--gold);color:var(--text)}
+.act.on{border-color:var(--gold);background:#2a2109;color:var(--gold);font-weight:600}
+.about{display:flex;flex-direction:column;gap:10px;margin-top:16px;color:var(--muted);font-size:18px;line-height:1.5}
+.about b{color:var(--text)}
+
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,30px);background:#1f1a0e;border:1px solid var(--gold);color:var(--text);
+  padding:12px 22px;border-radius:8px;font-size:16px;opacity:0;pointer-events:none;transition:all .25s}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:1060px){.art{display:none}main{padding-left:24px}header h1{font-size:32px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z" fill="currentColor"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12M4 6h.1M4 12h.1M4 18h.1" stroke-width="2.6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-restart" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></symbol>
+  <symbol id="i-snow" viewBox="0 0 24 24"><path d="M12 2v20M4 7l16 10M20 7 4 17"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/></symbol>
+  <symbol id="i-min" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-max" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></symbol>
+</svg>
+
+<div class="titlebar">
+  <div class="t"><svg><use href="#i-power"/></svg>Desligamento Programado</div>
+  <div class="wc">
+    <button data-w="min" aria-label="Minimizar"><svg><use href="#i-min"/></svg></button>
+    <button data-w="max" aria-label="Maximizar"><svg><use href="#i-max"/></svg></button>
+    <button data-w="close" class="x" aria-label="Fechar"><svg><use href="#i-close"/></svg></button>
+  </div>
+</div>
+
+<div class="app">
+  <div class="art"><img src="art.png" alt=""></div>
+  <main>
+    <header>
+      <svg><use href="#i-power"/></svg>
+      <div><h1>Desligamento Programado</h1><p>Defina em quanto tempo o seu computador será desligado.</p></div>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab on" data-tab="timer" role="tab"><svg><use href="#i-clock"/></svg>Timer</button>
+      <button class="tab" data-tab="opcoes" role="tab"><svg><use href="#i-gear"/></svg>Opções</button>
+      <button class="tab" data-tab="sobre" role="tab"><svg><use href="#i-info"/></svg>Sobre</button>
+    </nav>
+
+    <!-- TIMER -->
+    <section class="page on" id="p-timer">
+      <div class="card">
+        <div class="ch"><svg><use href="#i-clock"/></svg><div><h2>Definir tempo manualmente</h2><p>Escolha quantas horas, minutos e segundos.</p></div></div>
+        <div class="manual">
+          <div class="fields">
+            <div class="fld"><label>Horas</label><div class="spin"><input id="h" type="number" min="0" max="99" value="1"><div class="ud"><button data-s="h" data-d="1" aria-label="Mais horas"><svg><use href="#i-up"/></svg></button><button data-s="h" data-d="-1" aria-label="Menos horas"><svg><use href="#i-down"/></svg></button></div></div></div>
+            <div class="fld"><label>Minutos</label><div class="spin"><input id="m" type="number" min="0" max="59" value="0"><div class="ud"><button data-s="m" data-d="1" aria-label="Mais minutos"><svg><use href="#i-up"/></svg></button><button data-s="m" data-d="-1" aria-label="Menos minutos"><svg><use href="#i-down"/></svg></button></div></div></div>
+            <div class="fld"><label>Segundos</label><div class="spin"><input id="s" type="number" min="0" max="59" value="0"><div class="ud"><button data-s="s" data-d="1" aria-label="Mais segundos"><svg><use href="#i-up"/></svg></button><button data-s="s" data-d="-1" aria-label="Menos segundos"><svg><use href="#i-down"/></svg></button></div></div></div>
+          </div>
+          <button class="go" id="start"><svg><use href="#i-power"/></svg><span>Iniciar<br>Desligamento</span></button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ch"><svg><use href="#i-bolt"/></svg><div><h2>Tempos rápidos</h2><p>Selecione um tempo predefinido.</p></div></div>
+        <div class="quick" id="quick"></div>
+      </div>
+
+      <div class="card status">
+        <svg><use href="#i-list"/></svg>
+        <div class="tx"><h3>Status atual</h3><p id="stText">Nenhum desligamento programado.</p></div>
+        <button class="cancel" id="cancel" disabled><svg><use href="#i-x"/></svg><span>Cancelar<br>Desligamento</span></button>
+      </div>
+    </section>
+
+    <!-- OPÇÕES -->
+    <section class="page" id="p-opcoes">
+      <div class="card">
+        <div class="ch"><svg><use href="#i-power"/></svg><div><h2>Ação ao fim do tempo</h2><p>O que o computador deve fazer quando o timer acabar.</p></div></div>
+        <div class="acts" id="acts">
+          <button class="act" data-a="shutdown"><svg><use href="#i-power"/></svg>Desligar</button>
+          <button class="act" data-a="restart"><svg><use href="#i-restart"/></svg>Reiniciar</button>
+          <button class="act" data-a="sleep"><svg><use href="#i-moon"/></svg>Suspender</button>
+          <button class="act" data-a="hibernate"><svg><use href="#i-snow"/></svg>Hibernar</button>
+          <button class="act" data-a="logoff"><svg><use href="#i-logout"/></svg>Sair da conta</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="opt"><div><h4>Forçar fechamento dos programas</h4><p>Fecha aplicativos abertos sem esperar confirmação (pode perder dados não salvos).</p></div><button class="sw" role="switch" data-o="force"></button></div>
+        <div class="opt"><div><h4>Avisar 1 minuto antes</h4><p>Mostra uma notificação quando faltar 1 minuto.</p></div><button class="sw" role="switch" data-o="warn"></button></div>
+        <div class="opt"><div><h4>Iniciar com o Windows</h4><p>Abre o aplicativo automaticamente ao ligar o computador.</p></div><button class="sw" role="switch" data-o="startWithWindows"></button></div>
+        <div class="opt"><div><h4>Minimizar para a bandeja</h4><p>Ao fechar a janela, o app continua rodando perto do relógio.</p></div><button class="sw" role="switch" data-o="minimizeToTray"></button></div>
+        <div class="opt"><div><h4>Manter sempre no topo</h4><p>Deixa a janela acima das outras.</p></div><button class="sw" role="switch" data-o="alwaysOnTop"></button></div>
+      </div>
+    </section>
+
+    <!-- SOBRE -->
+    <section class="page" id="p-sobre">
+      <div class="card">
+        <div class="ch"><svg><use href="#i-info"/></svg><div><h2>Sobre</h2><p>Desligamento Programado <span id="ver"></span></p></div></div>
+        <div class="about">
+          <p>Programe o desligamento, a reinicialização, a suspensão, a hibernação ou o logoff do seu computador com um timer simples.</p>
+          <p><b>Como funciona:</b> para desligar e reiniciar, o app usa o agendamento nativo do Windows (<b>shutdown</b>), então o desligamento acontece mesmo se você fechar o programa. Cancelar aqui cancela também no Windows.</p>
+          <p><b>Dica:</b> use os tempos rápidos ou digite horas, minutos e segundos e clique em Iniciar.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="renderer.js"></script>
+</body>
+</html>
