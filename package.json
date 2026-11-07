@@ -1,7 +1,7 @@
 {
   "name": "desligamento-programado",
   "productName": "Desligamento Programado",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Programe o desligamento do seu computador.",
   "main": "main.js",
   "author": "Maidzinha",

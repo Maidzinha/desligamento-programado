@@ -46,6 +46,7 @@ Vá em **[Releases → última versão](https://github.com/Maidzinha/desligament
 
 ## Segurança
 
+- **Desde a versão 1.0.1:** um desligamento programado que já passou nunca é repetido ao abrir o app. Quem usa a 1.0.0 deve atualizar.
 - O app só executa comandos do próprio Windows (`shutdown` e suspensão), nada de fora.
 - Não acessa a internet, não guarda senhas e não coleta dados.
 - A configuração fica só no seu PC, em `%APPDATA%\desligamento-programado\config.json`.
@@ -99,6 +100,7 @@ npm run build
 | `index.html` · `renderer.js` | Interface e lógica da tela |
 | `art.png` · `icon.png` · `icon.ico` | Imagens e ícones |
 | `TESTAR.bat` · `GERAR-EXE.bat` | Atalhos para testar e gerar o `.exe` |
+| `CHANGELOG.md` | [Histórico de versões](CHANGELOG.md) |
 
 </details>
 

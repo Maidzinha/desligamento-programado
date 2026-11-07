@@ -1,5 +1,5 @@
 const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, Notification } = require('electron');
-const { execFile } = require('child_process');
+const { execFile, execFileSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
@@ -42,9 +42,16 @@ function arm() {
   clearTimers();
   if (!cfg.target) return;
   const ms = cfg.target - Date.now();
-  if (ms <= 0) { fire(); return; }
+  if (ms <= 0) {
+    // Agendamento vencido (ex.: o Windows já desligou/reiniciou com o app fechado).
+    // Descarta em vez de disparar de novo, para não desligar o PC outra vez ao abrir o app.
+    cfg.target = 0; cfg.pendingAction = null; save(); updateTray();
+    return;
+  }
   // Para desligar/reiniciar também agenda no Windows (continua valendo se o app for fechado)
   if (process.platform === 'win32' && (cfg.pendingAction === 'shutdown' || cfg.pendingAction === 'restart')) {
+    // Limpa o agendamento nativo anterior; sem isso o Windows recusa o novo (erro 1190)
+    try { execFileSync('shutdown', ['/a'], { windowsHide: true, stdio: 'ignore' }); } catch {}
     run('shutdown', [cfg.pendingAction === 'shutdown' ? '/s' : '/r', ...(cfg.force ? ['/f'] : []), '/t', String(Math.ceil(ms / 1000))]);
   }
   timer = setTimeout(fire, ms);
@@ -121,9 +128,21 @@ else {
 app.on('window-all-closed', () => { if (!cfg.minimizeToTray || quitting) app.quit(); });
 
 ipcMain.handle('get', () => ({ cfg, status: status(), version: app.getVersion() }));
-ipcMain.handle('start', (_, seconds) => { schedule(seconds, cfg.action, cfg.force); return status(); });
+const MAX_SECONDS = 99 * 3600 + 59 * 60 + 59;
+const ACTIONS = ['shutdown', 'restart', 'sleep', 'hibernate', 'logoff'];
+const BOOLS = ['force', 'warn', 'startWithWindows', 'minimizeToTray', 'alwaysOnTop'];
+ipcMain.handle('start', (_, seconds) => {
+  const s = Math.floor(Number(seconds));
+  if (!Number.isFinite(s) || s < 1 || s > MAX_SECONDS) return status();
+  schedule(s, cfg.action, cfg.force);
+  return status();
+});
 ipcMain.handle('cancel', () => { cancel(); return status(); });
-ipcMain.handle('set', (_, patch) => {
+ipcMain.handle('set', (_, raw) => {
+  // Só aceita as chaves conhecidas, com o tipo certo (a tela não pode mexer em target/pendingAction)
+  const patch = {};
+  if (raw && ACTIONS.includes(raw.action)) patch.action = raw.action;
+  for (const k of BOOLS) if (raw && typeof raw[k] === 'boolean') patch[k] = raw[k];
   cfg = { ...cfg, ...patch }; save(); applyStartup();
   if ('alwaysOnTop' in patch) win.setAlwaysOnTop(!!patch.alwaysOnTop);
   if ('minimizeToTray' in patch && patch.minimizeToTray) ensureTray();
